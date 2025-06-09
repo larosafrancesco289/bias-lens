@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import OpenAI from 'openai';
-import { chromium } from 'playwright';
+import { chromium, Page } from 'playwright';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,7 +20,17 @@ async function scrapeArticleWithJSDOM(url: string): Promise<{ title: string; con
     console.log(`Fetching URL: ${url}`);
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'max-age=0',
       },
     });
 
@@ -53,13 +63,39 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
   let browser;
   try {
     console.log(`Fallback: Using Playwright for ${url}`);
-    browser = await chromium.launch();
+    browser = await chromium.launch({ 
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+    });
     const page = await browser.newPage();
     
-    await page.goto(url, { waitUntil: 'networkidle' });
+    // Set a realistic user agent and viewport
+    await page.setExtraHTTPHeaders({
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    });
+    await page.setViewportSize({ width: 1366, height: 768 });
     
-    // Wait a bit for any dynamic content to load
-    await page.waitForTimeout(2000);
+    // Block unnecessary resources to speed up loading
+    await page.route('**/*', (route) => {
+      const resourceType = route.request().resourceType();
+      if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+        route.abort();
+      } else {
+        route.continue();
+      }
+    });
+    
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    
+    // Wait for content to load
+    await page.waitForTimeout(3000);
+    
+    // Try to close any modal/cookie banners
+    try {
+      await page.click('[data-testid="close-button"], .close, .modal-close, .cookie-accept, .gdpr-accept', { timeout: 1000 });
+    } catch (e) {
+      // Ignore if no modal found
+    }
     
     const html = await page.content();
     const dom = new JSDOM(html, { url });
@@ -68,7 +104,8 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
 
     if (!article) {
       console.log('Readability failed to parse article (Playwright fallback)');
-      return null;
+      // Try fallback extraction if Readability fails
+      return await extractContentFallback(page, url);
     }
 
     return {
@@ -86,6 +123,72 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
   }
 }
 
+async function extractContentFallback(page: Page, url: string): Promise<{ title: string; content: string; byline?: string } | null> {
+  try {
+    console.log('Attempting fallback content extraction');
+    
+    // Try to extract title
+    const title = await page.evaluate(() => {
+      return document.querySelector('h1')?.textContent?.trim() ||
+             document.querySelector('title')?.textContent?.trim() ||
+             document.querySelector('[data-testid="headline"]')?.textContent?.trim() ||
+             'Untitled Article';
+    });
+
+    // Try to extract main content using common selectors
+    const content = await page.evaluate(() => {
+      const selectors = [
+        'article',
+        '[data-testid="article-body"]',
+        '.article-body',
+        '.content',
+        '.post-content',
+        '.entry-content',
+        'main p',
+        '.story-body p'
+      ];
+
+      for (const selector of selectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          return Array.from(elements)
+            .map(el => el.textContent?.trim())
+            .filter(text => text && text.length > 50)
+            .join('\n\n');
+        }
+      }
+
+      // Last resort: get all p tags
+      const paragraphs = document.querySelectorAll('p');
+      return Array.from(paragraphs)
+        .map(p => p.textContent?.trim())
+        .filter(text => text && text.length > 50)
+        .join('\n\n');
+    });
+
+    // Try to extract byline
+    const byline = await page.evaluate(() => {
+      return document.querySelector('[data-testid="author"]')?.textContent?.trim() ||
+             document.querySelector('.author')?.textContent?.trim() ||
+             document.querySelector('.byline')?.textContent?.trim();
+    });
+
+    if (!content || content.length < 100) {
+      console.log('Fallback extraction failed - insufficient content');
+      return null;
+    }
+
+    return {
+      title: title || 'Untitled Article',
+      content,
+      byline,
+    };
+  } catch (error) {
+    console.error('Fallback extraction failed:', error);
+    return null;
+  }
+}
+
 async function analyzeArticleForBias(title: string, content: string): Promise<BiasAnalysis> {
   const prompt = `You are an expert media analyst. Analyze the following news article for bias and provide a structured assessment.
 
@@ -95,21 +198,31 @@ Content: ${content.substring(0, 4000)}... ${content.length > 4000 ? '(truncated)
 
 Please analyze this article for bias and return a JSON response with the following structure:
 {
-  "label": "string (e.g., 'Neutral', 'Slight Left Bias', 'Moderate Right Bias', 'Strong Left Bias', etc.)",
-  "reasoning": "string (2-3 sentences explaining your assessment)",
-  "confidence": number (0.0 to 1.0, how confident you are in your assessment),
-  "categories": ["array", "of", "article", "categories"] (e.g., ["Political", "News", "Opinion"])
+  "label": "string (choose from: 'Neutral', 'Slight Left Bias', 'Slight Right Bias', 'Moderate Left Bias', 'Moderate Right Bias', 'Strong Left Bias', 'Strong Right Bias')",
+  "reasoning": "string (2-3 sentences explaining your assessment with specific examples)",
+  "confidence": number (0.0 to 1.0 - be realistic and varied in your confidence based on clarity of evidence),
+  "categories": ["array", "of", "article", "categories"] (e.g., ["Political", "News", "Opinion", "Editorial", "Analysis"])
 }
 
-Consider factors like:
-- Language choice (emotionally charged vs neutral)
-- Source selection and attribution
-- Facts vs opinions presented
-- Balance of perspectives
-- Framing and context
-- Omission of relevant information
+CONFIDENCE SCORING GUIDELINES:
+- 0.9-1.0: Very clear bias with multiple obvious indicators
+- 0.7-0.9: Clear bias with several identifiable patterns
+- 0.5-0.7: Some bias indicators present but not overwhelming
+- 0.3-0.5: Subtle bias that requires careful analysis to detect
+- 0.1-0.3: Very subtle or uncertain bias assessment
+- 0.0-0.1: Insufficient evidence to determine bias
 
-Be objective and provide specific reasoning for your assessment.`;
+Consider these factors:
+- Language choice (emotionally charged vs neutral terms)
+- Source selection and attribution balance
+- Facts vs opinions ratio and presentation
+- Balance of perspectives and viewpoints
+- Framing, context, and narrative structure
+- Omission of relevant information or counterarguments
+- Headline and subheading tone
+- Use of quotes and their context
+
+Be specific in your reasoning and cite concrete examples from the text. Vary your confidence scores based on the actual strength of evidence rather than defaulting to safe middle-ground values.`;
 
   try {
     const completion = await openai.chat.completions.create({

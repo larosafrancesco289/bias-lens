@@ -67,11 +67,30 @@ export default function Home() {
   };
 
   const getBiasColor = (label: string) => {
-    if (label.toLowerCase().includes('neutral')) 
+    const lowerLabel = label.toLowerCase();
+    
+    // Neutral - Green (best)
+    if (lowerLabel.includes('neutral') || lowerLabel.includes('balanced')) {
       return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30';
-    if (label.toLowerCase().includes('moderate')) 
+    }
+    
+    // Slight bias - Yellow (mild concern)
+    if (lowerLabel.includes('slight') || lowerLabel.includes('minor')) {
       return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30';
-    return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
+    }
+    
+    // Moderate bias - Orange (moderate concern)
+    if (lowerLabel.includes('moderate')) {
+      return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30';
+    }
+    
+    // Strong/Heavy bias - Red (high concern)
+    if (lowerLabel.includes('strong') || lowerLabel.includes('heavy') || lowerLabel.includes('significant')) {
+      return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
+    }
+    
+    // Default fallback - Gray for unclear cases
+    return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30';
   };
 
   return (
