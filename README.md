@@ -1,12 +1,16 @@
 # Bias Lens
 
-A personal tool to check news articles for bias using GPT-4o Mini via OpenAI API. This application scrapes article content from URLs and provides AI-powered bias analysis with structured JSON responses including bias labels, reasoning, and confidence scores.
+A tool to check news articles for bias using GPT-4.1 Mini via OpenAI API. This application scrapes article content from URLs and provides AI-powered bias analysis with structured JSON responses including bias labels, reasoning, and confidence scores.
+
+**Live Demo**: [https://bias-lens-self.vercel.app/](https://bias-lens-self.vercel.app/)
+
+**GitHub Repository**: [https://github.com/larosafrancesco289/bias-lens](https://github.com/larosafrancesco289/bias-lens)
 
 ## Features
 
 - **Smart Article Extraction**: Uses Mozilla's Readability library (same as Firefox Reader View) to extract clean article content
 - **Fallback Scraping**: Automatically falls back to Playwright for JavaScript-heavy sites
-- **AI Bias Analysis**: Powered by OpenAI's GPT-4o Mini for objective bias assessment
+- **AI Bias Analysis**: Powered by OpenAI's GPT-4.1 Mini for objective bias assessment
 - **Modern UI**: Clean, responsive interface with dark/light theme support
 - **Detailed Results**: Shows bias label, confidence score, reasoning, and article metadata
 
@@ -14,7 +18,7 @@ A personal tool to check news articles for bias using GPT-4o Mini via OpenAI API
 
 - **Frontend**: Next.js 15, React 19, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **AI**: OpenAI GPT-4o Mini
+- **AI**: OpenAI GPT-4.1 Mini
 - **Scraping**: JSDOM + Mozilla Readability, Playwright (fallback)
 - **Styling**: Tailwind CSS with theme support
 
@@ -29,7 +33,7 @@ A personal tool to check news articles for bias using GPT-4o Mini via OpenAI API
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/bias-lens.git
+git clone https://github.com/larosafrancesco289/bias-lens.git
 cd bias-lens
 ```
 
@@ -66,7 +70,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 2. **Content Extraction**: 
    - First attempts extraction using JSDOM + Readability (fast, efficient)
    - Falls back to Playwright for JavaScript-heavy sites (slower but more thorough)
-3. **AI Analysis**: Sends extracted content to GPT-4o Mini for bias analysis
+3. **AI Analysis**: Sends extracted content to GPT-4.1 Mini for bias analysis
 4. **Results Display**: Shows bias assessment with reasoning and confidence score
 
 ## Article Extraction Process
@@ -132,6 +136,16 @@ src/
 - `openai` - AI bias analysis
 - `lucide-react` - Icons
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
 ## Deployment
 
 Deploy to Vercel, Netlify, or any platform supporting Next.js:
@@ -145,4 +159,10 @@ Make sure to set the `OPENAI_API_KEY` environment variable in your deployment pl
 
 ## License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Mozilla's Readability library for clean article extraction
+- OpenAI for providing the GPT-4.1 Mini API
+- The Next.js team for the excellent framework

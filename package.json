@@ -1,7 +1,26 @@
 {
   "name": "bias-lens",
   "version": "0.1.0",
-  "private": true,
+  "description": "AI-powered news article bias detection tool using GPT-4.1 Mini",
+  "author": "Francesco La Rosa",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/larosafrancesco289/bias-lens.git"
+  },
+  "homepage": "https://github.com/larosafrancesco289/bias-lens#readme",
+  "bugs": {
+    "url": "https://github.com/larosafrancesco289/bias-lens/issues"
+  },
+  "keywords": [
+    "bias-detection",
+    "news-analysis", 
+    "ai",
+    "gpt",
+    "nextjs",
+    "react",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

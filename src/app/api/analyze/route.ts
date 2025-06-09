@@ -17,7 +17,6 @@ interface BiasAnalysis {
 
 async function scrapeArticleWithJSDOM(url: string): Promise<{ title: string; content: string; byline?: string } | null> {
   try {
-    console.log(`Fetching URL: ${url}`);
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -44,7 +43,6 @@ async function scrapeArticleWithJSDOM(url: string): Promise<{ title: string; con
     const article = reader.parse();
 
     if (!article) {
-      console.log('Readability failed to parse article');
       return null;
     }
 
@@ -62,7 +60,6 @@ async function scrapeArticleWithJSDOM(url: string): Promise<{ title: string; con
 async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string; content: string; byline?: string } | null> {
   let browser;
   try {
-    console.log(`Fallback: Using Playwright for ${url}`);
     browser = await chromium.launch({ 
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'] 
@@ -103,7 +100,6 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
     const article = reader.parse();
 
     if (!article) {
-      console.log('Readability failed to parse article (Playwright fallback)');
       // Try fallback extraction if Readability fails
       return await extractContentFallback(page);
     }
@@ -125,7 +121,6 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
 
 async function extractContentFallback(page: Page): Promise<{ title: string; content: string; byline?: string } | null> {
   try {
-    console.log('Attempting fallback content extraction');
     
     // Try to extract title
     const title = await page.evaluate(() => {
@@ -174,7 +169,6 @@ async function extractContentFallback(page: Page): Promise<{ title: string; cont
     });
 
     if (!content || content.length < 100) {
-      console.log('Fallback extraction failed - insufficient content');
       return null;
     }
 

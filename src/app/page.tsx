@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, AlertCircle, CheckCircle, TrendingUp, Clock } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle, TrendingUp, Clock, Github } from 'lucide-react';
 import { ThemeToggle } from './components/theme-toggle';
 
 interface BiasResult {
@@ -106,7 +106,16 @@ export default function Home() {
               AI-powered news article bias detection
             </p>
           </div>
-          <div className="absolute top-8 right-6">
+          <div className="absolute top-8 right-6 flex items-center gap-3">
+            <a 
+              href="https://github.com/larosafrancesco289/bias-lens" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              aria-label="View on GitHub"
+            >
+              <Github className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+            </a>
             <ThemeToggle />
           </div>
         </div>
