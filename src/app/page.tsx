@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, AlertCircle, CheckCircle, TrendingUp, Clock, Github } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle, TrendingUp, Clock, Github, X } from 'lucide-react';
 import { ThemeToggle } from './components/theme-toggle';
 
 interface BiasResult {
@@ -24,8 +24,6 @@ export default function Home() {
   const [result, setResult] = useState<BiasResult | null>(null);
   const [articleInfo, setArticleInfo] = useState<{ title: string; byline?: string; wordCount: number } | null>(null);
   const [error, setError] = useState('');
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,26 +95,56 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 transition-all duration-300 ease-in-out">
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 shadow-sm border-b border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out">
-        <div className="max-w-4xl mx-auto px-6 py-8 relative">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-              Bias Lens
-            </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-300">
-              AI-powered news article bias detection
-            </p>
+        <div className="max-w-4xl mx-auto px-6 py-6 md:py-8">
+          {/* Mobile layout: stack vertically */}
+          <div className="flex flex-col space-y-4 md:hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex-1" />
+              <div className="flex items-center gap-3">
+                <a 
+                  href="https://github.com/larosafrancesco289/bias-lens" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="View on GitHub"
+                >
+                  <Github className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                </a>
+                <ThemeToggle />
+              </div>
+            </div>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                Bias Lens
+              </h1>
+              <p className="text-base text-slate-600 dark:text-slate-300">
+                AI-powered news article bias detection
+              </p>
+            </div>
           </div>
-          <div className="absolute top-8 right-6 flex items-center gap-3">
-            <a 
-              href="https://github.com/larosafrancesco289/bias-lens" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-              aria-label="View on GitHub"
-            >
-              <Github className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-            </a>
-            <ThemeToggle />
+          
+          {/* Desktop layout: keep original positioning */}
+          <div className="hidden md:block relative">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                Bias Lens
+              </h1>
+              <p className="text-lg text-slate-600 dark:text-slate-300">
+                AI-powered news article bias detection
+              </p>
+            </div>
+            <div className="absolute top-2 right-0 flex items-center gap-3">
+              <a 
+                href="https://github.com/larosafrancesco289/bias-lens" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                aria-label="View on GitHub"
+              >
+                <Github className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              </a>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>
@@ -137,10 +165,20 @@ export default function Home() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com/news-article"
-                  className="w-full px-4 py-3 pl-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full px-4 py-3 pl-12 pr-12 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   required
                 />
                 <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400 dark:text-slate-500" />
+                {url && (
+                  <button
+                    type="button"
+                    onClick={() => setUrl('')}
+                    className="absolute right-4 top-3.5 p-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    aria-label="Clear URL"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
             <button
