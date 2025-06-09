@@ -190,29 +190,19 @@ async function extractContentFallback(page: Page): Promise<{ title: string; cont
 }
 
 async function analyzeArticleForBias(title: string, content: string): Promise<BiasAnalysis> {
+  // Truncate content to fit within the 16k limit while leaving room for the prompt
+  const maxContentLength = 14000;
+  const truncatedContent = content.length > maxContentLength 
+    ? content.substring(0, maxContentLength) + '... (truncated)'
+    : content;
+
   const prompt = `You are an expert media analyst. Analyze the following news article for bias and provide a structured assessment.
 
 Title: ${title}
 
-Content: ${content.substring(0, 4000)}... ${content.length > 4000 ? '(truncated)' : ''}
+Content: ${truncatedContent}
 
-Please analyze this article for bias and return a JSON response with the following structure:
-{
-  "label": "string (choose from: 'Neutral', 'Slight Left Bias', 'Slight Right Bias', 'Moderate Left Bias', 'Moderate Right Bias', 'Strong Left Bias', 'Strong Right Bias')",
-  "reasoning": "string (2-3 sentences explaining your assessment with specific examples)",
-  "confidence": number (0.0 to 1.0 - be realistic and varied in your confidence based on clarity of evidence),
-  "categories": ["array", "of", "article", "categories"] (e.g., ["Political", "News", "Opinion", "Editorial", "Analysis"])
-}
-
-CONFIDENCE SCORING GUIDELINES:
-- 0.9-1.0: Very clear bias with multiple obvious indicators
-- 0.7-0.9: Clear bias with several identifiable patterns
-- 0.5-0.7: Some bias indicators present but not overwhelming
-- 0.3-0.5: Subtle bias that requires careful analysis to detect
-- 0.1-0.3: Very subtle or uncertain bias assessment
-- 0.0-0.1: Insufficient evidence to determine bias
-
-Consider these factors:
+Please analyze this article for bias. Consider these factors:
 - Language choice (emotionally charged vs neutral terms)
 - Source selection and attribution balance
 - Facts vs opinions ratio and presentation
@@ -222,6 +212,14 @@ Consider these factors:
 - Headline and subheading tone
 - Use of quotes and their context
 
+CONFIDENCE SCORING GUIDELINES:
+- 0.9-1.0: Very clear bias with multiple obvious indicators
+- 0.7-0.9: Clear bias with several identifiable patterns
+- 0.5-0.7: Some bias indicators present but not overwhelming
+- 0.3-0.5: Subtle bias that requires careful analysis to detect
+- 0.1-0.3: Very subtle or uncertain bias assessment
+- 0.0-0.1: Insufficient evidence to determine bias
+
 Be specific in your reasoning and cite concrete examples from the text. Vary your confidence scores based on the actual strength of evidence rather than defaulting to safe middle-ground values.`;
 
   try {
@@ -230,7 +228,7 @@ Be specific in your reasoning and cite concrete examples from the text. Vary you
       messages: [
         {
           role: 'system',
-          content: 'You are an objective media bias analyst. Provide balanced, evidence-based assessments of news articles. Always respond with valid JSON only.',
+          content: 'You are an objective media bias analyst. Provide balanced, evidence-based assessments of news articles.',
         },
         {
           role: 'user',
@@ -238,18 +236,49 @@ Be specific in your reasoning and cite concrete examples from the text. Vary you
         },
       ],
       temperature: 0.3,
-      max_tokens: 1000,
+      max_tokens: 2000,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "bias_analysis",
+          schema: {
+            type: "object",
+            properties: {
+              label: {
+                type: "string",
+                enum: ["Neutral", "Slight Left Bias", "Slight Right Bias", "Moderate Left Bias", "Moderate Right Bias", "Strong Left Bias", "Strong Right Bias"]
+              },
+              reasoning: {
+                type: "string",
+                description: "2-3 sentences explaining your assessment with specific examples"
+              },
+              confidence: {
+                type: "number",
+                minimum: 0.0,
+                maximum: 1.0,
+                description: "Confidence level based on clarity of evidence"
+              },
+              categories: {
+                type: "array",
+                items: {
+                  type: "string"
+                },
+                description: "Article categories such as Political, News, Opinion, Editorial, Analysis"
+              }
+            },
+            required: ["label", "reasoning", "confidence", "categories"],
+            additionalProperties: false
+          }
+        }
+      }
     });
 
     const response = completion.choices[0]?.message?.content;
     if (!response) {
       throw new Error('No response from OpenAI');
     }
-
-    // Clean the response in case it has markdown formatting
-    const cleanedResponse = response.replace(/```json\n?|```\n?/g, '').trim();
     
-    return JSON.parse(cleanedResponse) as BiasAnalysis;
+    return JSON.parse(response) as BiasAnalysis;
   } catch (error) {
     console.error('OpenAI analysis failed:', error);
     // Return a fallback response
