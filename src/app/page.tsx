@@ -11,10 +11,18 @@ interface BiasResult {
   categories: string[];
 }
 
+interface AnalysisResponse {
+  title: string;
+  byline?: string;
+  wordCount: number;
+  analysis: BiasResult;
+}
+
 export default function Home() {
   const [url, setUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<BiasResult | null>(null);
+  const [articleInfo, setArticleInfo] = useState<{ title: string; byline?: string; wordCount: number } | null>(null);
   const [error, setError] = useState('');
 
 
@@ -26,17 +34,36 @@ export default function Home() {
     setIsAnalyzing(true);
     setError('');
     setResult(null);
+    setArticleInfo(null);
 
-    // TODO: Replace with actual API call
-    setTimeout(() => {
-      setResult({
-        label: 'Moderate Left Bias',
-        reasoning: 'The article uses emotionally charged language and presents one perspective more favorably than others. Some key facts are omitted that would provide a more balanced view.',
-        confidence: 0.78,
-        categories: ['Political', 'Opinion', 'News']
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url.trim() }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Analysis failed');
+      }
+
+      const analysisData: AnalysisResponse = data;
+      setResult(analysisData.analysis);
+      setArticleInfo({
+        title: analysisData.title,
+        byline: analysisData.byline,
+        wordCount: analysisData.wordCount,
+      });
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
       setIsAnalyzing(false);
-    }, 2000);
+    }
   };
 
   const getBiasColor = (label: string) => {
@@ -124,6 +151,21 @@ export default function Home() {
             </div>
 
             <div className="space-y-6">
+              {/* Article Info */}
+              {articleInfo && (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Article Information</h3>
+                  <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg space-y-2">
+                    <h4 className="font-medium text-slate-900 dark:text-white">{articleInfo.title}</h4>
+                    {articleInfo.byline && (
+                      <p className="text-slate-600 dark:text-slate-400 text-sm">By {articleInfo.byline}</p>
+                    )}
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">
+                      Word count: {articleInfo.wordCount.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* Bias Label */}
               <div>
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Bias Assessment</h3>

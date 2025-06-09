@@ -1,36 +1,148 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bias Lens
+
+A personal tool to check news articles for bias using GPT-4o Mini via OpenAI API. This application scrapes article content from URLs and provides AI-powered bias analysis with structured JSON responses including bias labels, reasoning, and confidence scores.
+
+## Features
+
+- **Smart Article Extraction**: Uses Mozilla's Readability library (same as Firefox Reader View) to extract clean article content
+- **Fallback Scraping**: Automatically falls back to Playwright for JavaScript-heavy sites
+- **AI Bias Analysis**: Powered by OpenAI's GPT-4o Mini for objective bias assessment
+- **Modern UI**: Clean, responsive interface with dark/light theme support
+- **Detailed Results**: Shows bias label, confidence score, reasoning, and article metadata
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **AI**: OpenAI GPT-4o Mini
+- **Scraping**: JSDOM + Mozilla Readability, Playwright (fallback)
+- **Styling**: Tailwind CSS with theme support
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- OpenAI API key
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/bias-lens.git
+cd bias-lens
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Install Playwright browsers (for JavaScript-heavy sites):
+```bash
+npx playwright install chromium
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up environment variables:
+```bash
+cp env.example .env.local
+```
 
-## Learn More
+Edit `.env.local` and add your OpenAI API key:
+```
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. Run the development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) to use the application.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How It Works
 
-## Deploy on Vercel
+1. **URL Input**: Enter a news article URL
+2. **Content Extraction**: 
+   - First attempts extraction using JSDOM + Readability (fast, efficient)
+   - Falls back to Playwright for JavaScript-heavy sites (slower but more thorough)
+3. **AI Analysis**: Sends extracted content to GPT-4o Mini for bias analysis
+4. **Results Display**: Shows bias assessment with reasoning and confidence score
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Article Extraction Process
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The tool uses a two-tier approach for maximum compatibility:
+
+### Primary Method: JSDOM + Readability
+- Fetches raw HTML via standard HTTP request
+- Creates DOM clone using JSDOM
+- Extracts article content using Mozilla Readability
+- Fast and efficient for most news sites
+
+### Fallback Method: Playwright
+- Launches headless Chromium browser
+- Allows JavaScript to execute and page to hydrate
+- Extracts content from fully rendered page
+- Handles paywalls, infinite scroll, and dynamic content
+
+## API Endpoints
+
+### POST `/api/analyze`
+Analyzes a news article for bias.
+
+**Request Body:**
+```json
+{
+  "url": "https://example.com/news-article"
+}
+```
+
+**Response:**
+```json
+{
+  "title": "Article Title",
+  "byline": "Author Name",
+  "wordCount": 1250,
+  "analysis": {
+    "label": "Moderate Left Bias",
+    "reasoning": "Analysis explanation...",
+    "confidence": 0.78,
+    "categories": ["Political", "News"]
+  }
+}
+```
+
+## Development
+
+### Project Structure
+```
+src/
+├── app/
+│   ├── api/analyze/       # Bias analysis API route
+│   ├── components/        # UI components
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Main page
+```
+
+### Key Dependencies
+- `@mozilla/readability` - Article content extraction
+- `jsdom` - DOM manipulation for scraping
+- `playwright` - Headless browser fallback
+- `openai` - AI bias analysis
+- `lucide-react` - Icons
+
+## Deployment
+
+Deploy to Vercel, Netlify, or any platform supporting Next.js:
+
+```bash
+npm run build
+npm start
+```
+
+Make sure to set the `OPENAI_API_KEY` environment variable in your deployment platform.
+
+## License
+
+MIT License - see LICENSE file for details.
