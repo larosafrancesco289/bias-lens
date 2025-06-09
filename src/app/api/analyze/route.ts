@@ -93,7 +93,7 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
     // Try to close any modal/cookie banners
     try {
       await page.click('[data-testid="close-button"], .close, .modal-close, .cookie-accept, .gdpr-accept', { timeout: 1000 });
-    } catch (e) {
+    } catch {
       // Ignore if no modal found
     }
     
@@ -105,7 +105,7 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
     if (!article) {
       console.log('Readability failed to parse article (Playwright fallback)');
       // Try fallback extraction if Readability fails
-      return await extractContentFallback(page, url);
+      return await extractContentFallback(page);
     }
 
     return {
@@ -123,7 +123,7 @@ async function scrapeArticleWithPlaywright(url: string): Promise<{ title: string
   }
 }
 
-async function extractContentFallback(page: Page, url: string): Promise<{ title: string; content: string; byline?: string } | null> {
+async function extractContentFallback(page: Page): Promise<{ title: string; content: string; byline?: string } | null> {
   try {
     console.log('Attempting fallback content extraction');
     
