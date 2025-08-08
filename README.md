@@ -57,7 +57,12 @@ Edit `.env.local` and add your OpenAI API key:
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-5. Run the development server:
+5. (Optional) Choose a model via env var. Defaults to GPT-5 Mini if not set:
+```
+OPENAI_MODEL=gpt-5
+```
+
+6. Run the development server:
 ```bash
 npm run dev
 ```

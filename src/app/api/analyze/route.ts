@@ -5,8 +5,9 @@ import OpenAI from 'openai';
 import { chromium, Page } from 'playwright';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY?.trim(),
 });
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 
 interface BiasAnalysis {
   label: string;
@@ -214,67 +215,107 @@ CONFIDENCE SCORING GUIDELINES:
 - 0.1-0.3: Very subtle or uncertain bias assessment
 - 0.0-0.1: Insufficient evidence to determine bias
 
-Be specific in your reasoning and cite concrete examples from the text. Vary your confidence scores based on the actual strength of evidence rather than defaulting to safe middle-ground values.`;
+Be specific in your reasoning and cite concrete examples from the text. Vary your confidence scores based on the actual strength of evidence rather than defaulting to safe middle-ground values.
+
+Output strictly as a single minified JSON object with exactly these keys and types:
+{"label": string (one of: "Neutral", "Slight Left Bias", "Slight Right Bias", "Moderate Left Bias", "Moderate Right Bias", "Strong Left Bias", "Strong Right Bias"), "reasoning": string, "confidence": number between 0 and 1, "categories": string[]}
+
+Do not include any additional text before or after the JSON.`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-5',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an objective media bias analyst. Provide balanced, evidence-based assessments of news articles.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 2000,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "bias_analysis",
-          schema: {
-            type: "object",
-            properties: {
-              label: {
-                type: "string",
-                enum: ["Neutral", "Slight Left Bias", "Slight Right Bias", "Moderate Left Bias", "Moderate Right Bias", "Strong Left Bias", "Strong Right Bias"]
-              },
-              reasoning: {
-                type: "string",
-                description: "2-3 sentences explaining your assessment with specific examples"
-              },
-              confidence: {
-                type: "number",
-                minimum: 0.0,
-                maximum: 1.0,
-                description: "Confidence level based on clarity of evidence"
-              },
-              categories: {
-                type: "array",
-                items: {
-                  type: "string"
-                },
-                description: "Article categories such as Political, News, Opinion, Editorial, Analysis"
-              }
-            },
-            required: ["label", "reasoning", "confidence", "categories"],
-            additionalProperties: false
+    const systemInstruction = 'You are an objective media bias analyst. Provide balanced, evidence-based assessments of news articles. Respond with JSON only.';
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: `System: ${systemInstruction}\n\nUser:\n${prompt}`,
+      max_output_tokens: 2000,
+    });
+
+    interface OpenAIResponsesTextChunk {
+      text?: { value?: string };
+    }
+    interface OpenAIResponsesOutputItem {
+      content?: OpenAIResponsesTextChunk[];
+    }
+    interface OpenAIResponsesResultMinimal {
+      output_text?: string;
+      output?: OpenAIResponsesOutputItem[];
+    }
+
+    const r = response as unknown as OpenAIResponsesResultMinimal;
+    let text = r.output_text ?? r.output?.[0]?.content?.[0]?.text?.value ?? null;
+
+    if (!text) {
+      throw new Error('No response text from OpenAI');
+    }
+
+    // Strip code fences if present
+    const fencedMatch = text.match(/```json[\s\S]*?```/i) || text.match(/```[\s\S]*?```/);
+    if (fencedMatch) {
+      text = fencedMatch[0]
+        .replace(/```json/i, '')
+        .replace(/```/g, '')
+        .trim();
+    }
+
+    // Try direct parse first
+    try {
+      return JSON.parse(text) as BiasAnalysis;
+    } catch {}
+
+    // Attempt to extract the first valid JSON object by matching balanced braces
+    function extractFirstJsonObject(source: string): string | null {
+      let inString = false;
+      let escape = false;
+      let depth = 0;
+      let start = -1;
+      for (let i = 0; i < source.length; i++) {
+        const ch = source[i];
+        if (inString) {
+          if (escape) {
+            escape = false;
+          } else if (ch === '\\') {
+            escape = true;
+          } else if (ch === '"') {
+            inString = false;
+          }
+          continue;
+        } else {
+          if (ch === '"') {
+            inString = true;
+            continue;
+          }
+          if (ch === '{') {
+            if (depth === 0) start = i;
+            depth++;
+          } else if (ch === '}') {
+            depth--;
+            if (depth === 0 && start !== -1) {
+              return source.slice(start, i + 1);
+            }
           }
         }
       }
-    });
-
-    const response = completion.choices[0]?.message?.content;
-    if (!response) {
-      throw new Error('No response from OpenAI');
+      return null;
     }
-    
-    return JSON.parse(response) as BiasAnalysis;
-  } catch (error) {
-    console.error('OpenAI analysis failed:', error);
+
+    const extracted = extractFirstJsonObject(text);
+    if (extracted) {
+      return JSON.parse(extracted) as BiasAnalysis;
+    }
+
+    throw new Error('Model did not return valid JSON.');
+  } catch (error: unknown) {
+    const errInfo = (() => {
+      if (typeof error === 'object' && error !== null) {
+        const e = error as { status?: number; response?: { status?: number; data?: unknown }; message?: string; error?: unknown };
+        return {
+          status: e.status ?? e.response?.status,
+          data: e.response?.data ?? e.error ?? e.message,
+        };
+      }
+      return {} as { status?: number; data?: unknown };
+    })();
+    console.error('OpenAI analysis failed:', errInfo);
     // Return a fallback response
     return {
       label: 'Analysis Failed',
@@ -288,6 +329,13 @@ Be specific in your reasoning and cite concrete examples from the text. Vary you
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
+
+    // Optional masked debug for env/model in development
+    if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_OPENAI_KEY === '1') {
+      const key = process.env.OPENAI_API_KEY?.trim() ?? '';
+      const maskedKey = key ? `${key.slice(0, 6)}...${key.slice(-4)}` : 'missing';
+      console.log('[BiasLens] OpenAI config (dev):', { model: OPENAI_MODEL, apiKey: maskedKey });
+    }
 
     if (!url) {
       return NextResponse.json(
