@@ -1,7 +1,7 @@
 {
   "name": "bias-lens",
   "version": "0.1.0",
-  "description": "AI-powered news article bias detection tool using GPT-4.1 Mini",
+  "description": "AI-powered news article bias detection tool using GPT-5",
   "author": "Francesco La Rosa",
   "license": "MIT",
   "repository": {
