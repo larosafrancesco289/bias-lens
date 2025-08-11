@@ -1,112 +1,65 @@
-# Bias Lens
+### Bias Lens
 
-A tool to check news articles for bias using GPT-5 via OpenAI API. This application scrapes article content from URLs and provides AI-powered bias analysis with structured JSON responses including bias labels, reasoning, and confidence scores.
+Bias Lens analyzes news article URLs and returns a structured bias assessment using the OpenAI API.
 
-**Live Demo**: [https://bias-lens-self.vercel.app/](https://bias-lens-self.vercel.app/)
+Live demo: `https://bias-lens-self.vercel.app/`
 
-**GitHub Repository**: [https://github.com/larosafrancesco289/bias-lens](https://github.com/larosafrancesco289/bias-lens)
+Repository: `https://github.com/larosafrancesco289/bias-lens`
 
-## Features
+### Why
 
-- **Smart Article Extraction**: Uses Mozilla's Readability library (same as Firefox Reader View) to extract clean article content
-- **Fallback Scraping**: Automatically falls back to Playwright for JavaScript-heavy sites
-- **AI Bias Analysis**: Powered by OpenAI's GPT-5 for objective bias assessment
-- **Modern UI**: Clean, responsive interface with dark/light theme support
-- **Detailed Results**: Shows bias label, confidence score, reasoning, and article metadata
+Reading news across outlets can expose different framing and language. This tool extracts article text and produces a concise, machine readable assessment that helps you compare tone and balance.
 
-## Tech Stack
+### Features
 
-- **Frontend**: Next.js 15, React 19, Tailwind CSS
-- **Backend**: Next.js API Routes
-- **AI**: OpenAI GPT-5
-- **Scraping**: JSDOM + Mozilla Readability, Playwright (fallback)
-- **Styling**: Tailwind CSS with theme support
+- Smart extraction with Mozilla Readability
+- Fallback to Playwright for JavaScript heavy pages
+- JSON output with label, reasoning, confidence, and categories
+- Simple Next.js UI with light and dark themes
 
-## Getting Started
+### Setup
 
-### Prerequisites
+- Requirements: Node.js 18 or later, an OpenAI API key
+- Clone and configure environment
 
-- Node.js 18+ 
-- OpenAI API key
-
-### Installation
-
-1. Clone the repository:
 ```bash
 git clone https://github.com/larosafrancesco289/bias-lens.git
 cd bias-lens
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Install Playwright browsers (for JavaScript-heavy sites):
-```bash
-npx playwright install chromium
-```
-
-4. Set up environment variables:
-```bash
 cp env.example .env.local
+# edit .env.local and set OPENAI_API_KEY
 ```
 
-Edit `.env.local` and add your OpenAI API key:
-```
-OPENAI_API_KEY=your_openai_api_key_here
-```
+### Quickstart
 
-5. (Optional) Choose a model via env var. Defaults to GPT-5 Mini if not set:
-```
-OPENAI_MODEL=gpt-5
-```
+Option A: scripts
 
-6. Run the development server:
 ```bash
+./scripts/install.sh
+./scripts/dev.sh
+```
+
+Option B: npm
+
+```bash
+npm run setup
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to use the application.
+Visit `http://localhost:3000`.
 
-## How It Works
+### Usage
 
-1. **URL Input**: Enter a news article URL
-2. **Content Extraction**: 
-   - First attempts extraction using JSDOM + Readability (fast, efficient)
-   - Falls back to Playwright for JavaScript-heavy sites (slower but more thorough)
-3. **AI Analysis**: Sends extracted content to GPT-5 for bias analysis
-4. **Results Display**: Shows bias assessment with reasoning and confidence score
+- Web UI: paste a news article URL and run Analyze
+- API: POST `/api/analyze`
 
-## Article Extraction Process
+Request
 
-The tool uses a two-tier approach for maximum compatibility:
-
-### Primary Method: JSDOM + Readability
-- Fetches raw HTML via standard HTTP request
-- Creates DOM clone using JSDOM
-- Extracts article content using Mozilla Readability
-- Fast and efficient for most news sites
-
-### Fallback Method: Playwright
-- Launches headless Chromium browser
-- Allows JavaScript to execute and page to hydrate
-- Extracts content from fully rendered page
-- Handles paywalls, infinite scroll, and dynamic content
-
-## API Endpoints
-
-### POST `/api/analyze`
-Analyzes a news article for bias.
-
-**Request Body:**
 ```json
-{
-  "url": "https://example.com/news-article"
-}
+{ "url": "https://example.com/news-article" }
 ```
 
-**Response:**
+Response
+
 ```json
 {
   "title": "Article Title",
@@ -114,60 +67,58 @@ Analyzes a news article for bias.
   "wordCount": 1250,
   "analysis": {
     "label": "Moderate Left Bias",
-    "reasoning": "Analysis explanation...",
+    "reasoning": "Explanation",
     "confidence": 0.78,
-    "categories": ["Political", "News"]
+    "categories": ["Politics"]
   }
 }
 ```
 
-## Development
-
-### Project Structure
-```
-src/
-├── app/
-│   ├── api/analyze/       # Bias analysis API route
-│   ├── components/        # UI components
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Main page
-```
-
-### Key Dependencies
-- `@mozilla/readability` - Article content extraction
-- `jsdom` - DOM manipulation for scraping
-- `playwright` - Headless browser fallback
-- `openai` - AI bias analysis
-- `lucide-react` - Icons
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Deployment
-
-Deploy to Vercel, Netlify, or any platform supporting Next.js:
+Curl example
 
 ```bash
-npm run build
-npm start
+curl -s -X POST http://localhost:3000/api/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com/news-article"}'
 ```
 
-Make sure to set the `OPENAI_API_KEY` environment variable in your deployment platform.
+### Architecture
 
-## License
+Code tree
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```
+src/
+  app/
+    api/
+      analyze/
+        route.ts        # POST /api/analyze
+    components/
+      theme-provider.tsx
+      theme-toggle.tsx
+      ui/
+        Button.tsx
+        Card.tsx
+    globals.css
+    layout.tsx
+    page.tsx
+```
 
-## Acknowledgments
+Notes
 
-- Mozilla's Readability library for clean article extraction
-- OpenAI for providing the GPT-5 API
-- The Next.js team for the excellent framework
+- Primary extraction uses JSDOM and Readability
+- Fallback uses Playwright and a set of common selectors
+- OpenAI model is configurable via `OPENAI_MODEL` and defaults to `gpt-5-mini`
+
+### Scripts
+
+- `npm run setup`: install dependencies and Playwright browsers
+- `npm run dev`: start the dev server
+- `npm run build`: build for production
+- `npm start`: run the production server
+- `npm run typecheck`: TypeScript checks
+- `npm run lint`: lint
+- `npm run format`: lint with fixes
+
+### License
+
+MIT. See `LICENSE`.

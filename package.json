@@ -22,10 +22,13 @@
     "typescript"
   ],
   "scripts": {
+    "setup": "npm install && npx playwright install chromium",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "format": "eslint . --fix"
   },
   "dependencies": {
     "@mozilla/readability": "^0.5.0",
