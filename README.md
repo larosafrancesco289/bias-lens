@@ -2,9 +2,7 @@
 
 Bias Lens analyzes news article URLs and returns a structured bias assessment using the OpenAI API.
 
-Live demo: `https://bias-lens-self.vercel.app/`
-
-Repository: `https://github.com/larosafrancesco289/bias-lens`
+Live demo: [https://bias-lens-self.vercel.app/](https://bias-lens-self.vercel.app/)
 
 ### Why
 
