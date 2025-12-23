@@ -4,5 +4,8 @@
       "maxDuration": 30
     }
   },
-  "installCommand": "npm install && npx playwright install chromium"
-} 
+  "installCommand": "bun install && bunx playwright install chromium",
+  "buildCommand": "bun run build",
+  "devCommand": "bun run dev",
+  "framework": "nextjs"
+}

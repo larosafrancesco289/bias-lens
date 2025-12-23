@@ -3,12 +3,14 @@
 /* --- Francesco Design Tokens (Tailwind v4 @theme) --- */
 @theme {
   /* Fonts */
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Radius + shadows (use one shadow token and override in .dark) */
   --radius-2xl: 16px;
-  --shadow-card: 0 10px 25px rgba(0,0,0,.10);
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  --shadow-glow: 0 0 15px rgba(185, 151, 91, 0.3);
 
   /* -------- Imperial Archive (LIGHT) -------- */
   --color-canvas: #f4f1ec;   /* page background */
@@ -19,6 +21,9 @@
   --color-accent: #B9975B;   /* gold */
   --color-accent-2: #6D2A8A; /* imperial purple */
   --color-border: #d5cfc4;   /* strokes/dividers */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
 }
 
 /* Inform the browser which palette to optimize for */
@@ -34,10 +39,11 @@
   --color-fg: #F1EFEF;
   --color-fg-muted: #C8C3D1;
   --color-accent: #D4AF37;
-  --color-accent-2: #5B2C6F;
+  --color-accent-2: #9b59b6;
   --color-border: #2E2533;
-
   --shadow-card: 0 8px 24px rgba(0,0,0,.45);
+  --shadow-card-hover: 0 12px 32px rgba(0,0,0,.55);
+  --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.2);
 }
 
 /* Optional component primitives */
@@ -47,11 +53,62 @@
 
 /* Example base styles (keep minimal) */
 html, body { height: 100%; }
-body { @apply bg-canvas text-fg font-sans; }
+body { 
+  @apply bg-canvas text-fg font-sans antialiased selection:bg-accent selection:text-white; 
+}
 
 /* Smooth theme transitions */
 * {
-  transition-property: background-color, border-color, color, fill, stroke;
+  transition-property: background-color, border-color, color, fill, stroke, transform, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-fg-muted);
 }

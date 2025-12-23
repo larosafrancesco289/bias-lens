@@ -5,9 +5,14 @@ import OpenAI from 'openai';
 import { chromium, Page } from 'playwright';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY?.trim(),
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY?.trim(),
+  defaultHeaders: {
+    'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', // Optional, for including your app on openrouter.ai rankings.
+    'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'Bias Lens', // Optional. Shows in rankings on openrouter.ai.
+  },
 });
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
+const TARGET_MODEL = process.env.OPENROUTER_MODEL || 'x-ai/grok-4.1-fast';
 
 interface BiasAnalysis {
   label: string;
@@ -224,86 +229,43 @@ Do not include any additional text before or after the JSON.`;
 
   try {
     const systemInstruction = 'You are an objective media bias analyst. Provide balanced, evidence-based assessments of news articles. Respond with JSON only.';
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: `System: ${systemInstruction}\n\nUser:\n${prompt}`,
-      max_output_tokens: 2000,
+    const response = await openai.chat.completions.create({
+      model: TARGET_MODEL,
+      messages: [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.3, // Lower temperature for more consistent JSON
+      max_tokens: 2000,
+      // response_format: { type: "json_object" } // Uncomment if the model supports it explicitly, Grok usually follows instructions well.
     });
 
-    interface OpenAIResponsesTextChunk {
-      text?: { value?: string };
-    }
-    interface OpenAIResponsesOutputItem {
-      content?: OpenAIResponsesTextChunk[];
-    }
-    interface OpenAIResponsesResultMinimal {
-      output_text?: string;
-      output?: OpenAIResponsesOutputItem[];
-    }
-
-    const r = response as unknown as OpenAIResponsesResultMinimal;
-    let text = r.output_text ?? r.output?.[0]?.content?.[0]?.text?.value ?? null;
+    const text = response.choices[0]?.message?.content || null;
 
     if (!text) {
-      throw new Error('No response text from OpenAI');
+      throw new Error('No response text from OpenRouter');
     }
 
     // Strip code fences if present
-    const fencedMatch = text.match(/```json[\s\S]*?```/i) || text.match(/```[\s\S]*?```/);
-    if (fencedMatch) {
-      text = fencedMatch[0]
-        .replace(/```json/i, '')
-        .replace(/```/g, '')
-        .trim();
+    let cleanText = text;
+    const fencedMatch = text.match(/```json([\s\S]*?)```/i) || text.match(/```([\s\S]*?)```/);
+    if (fencedMatch && fencedMatch[1]) {
+      cleanText = fencedMatch[1].trim();
     }
 
-    // Try direct parse first
+    // Try parse
     try {
-      return JSON.parse(text) as BiasAnalysis;
-    } catch {}
-
-    // Attempt to extract the first valid JSON object by matching balanced braces
-    function extractFirstJsonObject(source: string): string | null {
-      let inString = false;
-      let escape = false;
-      let depth = 0;
-      let start = -1;
-      for (let i = 0; i < source.length; i++) {
-        const ch = source[i];
-        if (inString) {
-          if (escape) {
-            escape = false;
-          } else if (ch === '\\') {
-            escape = true;
-          } else if (ch === '"') {
-            inString = false;
-          }
-          continue;
-        } else {
-          if (ch === '"') {
-            inString = true;
-            continue;
-          }
-          if (ch === '{') {
-            if (depth === 0) start = i;
-            depth++;
-          } else if (ch === '}') {
-            depth--;
-            if (depth === 0 && start !== -1) {
-              return source.slice(start, i + 1);
-            }
-          }
-        }
+      return JSON.parse(cleanText) as BiasAnalysis;
+    } catch (e) {
+      console.warn('JSON parse failed, attempting extraction:', e);
+      // Fallback extraction
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+         return JSON.parse(jsonMatch[0]) as BiasAnalysis;
       }
-      return null;
+      throw new Error('Failed to parse JSON response');
     }
 
-    const extracted = extractFirstJsonObject(text);
-    if (extracted) {
-      return JSON.parse(extracted) as BiasAnalysis;
-    }
-
-    throw new Error('Model did not return valid JSON.');
   } catch (error: unknown) {
     const errInfo = (() => {
       if (typeof error === 'object' && error !== null) {
@@ -331,10 +293,10 @@ export async function POST(request: NextRequest) {
     const { url } = await request.json();
 
     // Optional masked debug for env/model in development
-    if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_OPENAI_KEY === '1') {
-      const key = process.env.OPENAI_API_KEY?.trim() ?? '';
+    if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_OPENROUTER_KEY === '1') {
+      const key = process.env.OPENROUTER_API_KEY?.trim() ?? '';
       const maskedKey = key ? `${key.slice(0, 6)}...${key.slice(-4)}` : 'missing';
-      console.log('[BiasLens] OpenAI config (dev):', { model: OPENAI_MODEL, apiKey: maskedKey });
+      console.log('[BiasLens] OpenRouter config (dev):', { model: TARGET_MODEL, apiKey: maskedKey });
     }
 
     if (!url) {

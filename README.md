@@ -27,23 +27,21 @@ cp env.example .env.local
 # edit .env.local and set OPENAI_API_KEY
 ```
 
-### Quickstart
+## Getting Started
 
-Option A: scripts
-
-```bash
-./scripts/install.sh
-./scripts/dev.sh
-```
-
-Option B: npm
+First, install the dependencies (using [Bun](https://bun.sh)):
 
 ```bash
-npm run setup
-npm run dev
+bun install
 ```
 
-Visit `http://localhost:3000`.
+Then, run the development server:
+
+```bash
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ### Usage
 

@@ -5,11 +5,9 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$DIR"
 
 echo "Installing dependencies"
-npm install
+bun install
 
 echo "Installing Playwright Chromium"
-npx --yes playwright install chromium
+bunx --yes playwright install chromium
 
 echo "Done"
-
-
