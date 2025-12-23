@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, AlertCircle, CheckCircle, TrendingUp, Clock, Github, X, Shield, BookOpen, AlertTriangle } from 'lucide-react';
+import { Search, CheckCircle, TrendingUp, Clock, Github, X, Shield, BookOpen, AlertTriangle } from 'lucide-react';
 import { Card } from './components/ui/Card';
 import { Button } from './components/ui/Button';
 import { ThemeToggle } from './components/theme-toggle';
