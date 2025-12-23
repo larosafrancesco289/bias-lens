@@ -14,7 +14,7 @@
   },
   "keywords": [
     "bias-detection",
-    "news-analysis", 
+    "news-analysis",
     "ai",
     "gpt",
     "nextjs",
@@ -35,7 +35,7 @@
     "@vercel/analytics": "^1.5.0",
     "jsdom": "^25.0.1",
     "lucide-react": "^0.513.0",
-    "next": "15.3.3",
+    "next": "15.3.8",
     "next-themes": "^0.4.6",
     "openai": "^4.73.1",
     "playwright": "^1.49.1",
