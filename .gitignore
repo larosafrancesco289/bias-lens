@@ -51,12 +51,12 @@ next-env.d.ts
 Thumbs.db
 desktop.ini
 
-# IDEs
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-!.vscode/launch.json
+# IDEs and editors
+.vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
+.editorconfig
 
 # Lockfiles
 package-lock.json

@@ -2,15 +2,18 @@
 
 /* --- Francesco Design Tokens (Tailwind v4 @theme) --- */
 @theme {
-  /* Fonts */
+  /* Fonts - Editorial Typography System */
   --font-sans: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-serif: var(--font-playfair), Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Radius + shadows (use one shadow token and override in .dark) */
   --radius-2xl: 16px;
+  --radius-xl: 12px;
   --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
   --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
   --shadow-glow: 0 0 15px rgba(185, 151, 91, 0.3);
+  --shadow-editorial: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
 
   /* -------- Imperial Archive (LIGHT) -------- */
   --color-canvas: #f4f1ec;   /* page background */
@@ -96,6 +99,177 @@ body {
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* --- Editorial Animations --- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes draw-ring {
+  0% { stroke-dashoffset: 283; }
+  100% { stroke-dashoffset: var(--ring-progress, 0); }
+}
+
+@keyframes reveal-up {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+    clip-path: inset(100% 0 0 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes reveal-scale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-muted) 25%,
+    var(--color-surface) 50%,
+    var(--color-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.animate-draw-ring {
+  animation: draw-ring 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-reveal-up {
+  animation: reveal-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.animate-reveal-scale {
+  animation: reveal-scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* --- Editorial Typography --- */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.headline-display {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.headline-section {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.label-accent {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.body-editorial {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--color-fg-muted);
+}
+
+.caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-fg-muted);
+}
+
+/* Drop cap for article content */
+.drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 0.85;
+  margin-right: 0.5rem;
+  margin-top: 0.25rem;
+  color: var(--color-accent);
+}
+
+/* Editorial decorative elements */
+.editorial-rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-border) 20%,
+    var(--color-border) 80%,
+    transparent 100%
+  );
+}
+
+.editorial-rule-accent {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-accent) 30%,
+    var(--color-accent) 70%,
+    transparent 100%
+  );
+}
+
+.editorial-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.editorial-ornament::before,
+.editorial-ornament::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar {

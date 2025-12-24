@@ -2,42 +2,54 @@
 
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return <div className="w-10 h-10 rounded-2xl bg-muted animate-pulse" />;
+    return <div className="w-10 h-10 rounded-xl bg-muted animate-pulse" />;
   }
 
-  const themes = [
-    { name: 'light', icon: Sun, label: 'Light' },
-    { name: 'dark', icon: Moon, label: 'Dark' },
-    { name: 'system', icon: Monitor, label: 'System' }
-  ];
+  const isDark = resolvedTheme === 'dark';
+
+  const toggleTheme = () => {
+    setTheme(isDark ? 'light' : 'dark');
+  };
 
   return (
-    <div className="flex items-center bg-muted rounded-2xl p-1 border border-border">
-      {themes.map(({ name, icon: Icon, label }) => (
-        <button
-          key={name}
-          onClick={() => setTheme(name)}
-          className={`p-2 rounded-xl transition-colors ${
-            theme === name
-              ? 'bg-surface shadow-sm text-fg'
-              : 'text-fg-muted hover:text-fg'
-          }`}
-          title={label}
-        >
-          <Icon className="h-4 w-4" />
-        </button>
-      ))}
-    </div>
+    <button
+      onClick={toggleTheme}
+      className={cn(
+        'relative w-10 h-10 rounded-xl',
+        'bg-muted border border-border',
+        'flex items-center justify-center',
+        'hover:bg-surface hover:border-accent/50',
+        'active:scale-95',
+        'transition-all duration-200'
+      )}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      <Sun
+        className={cn(
+          'h-[18px] w-[18px] text-accent',
+          'absolute transition-all duration-300',
+          isDark ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
+        )}
+      />
+      <Moon
+        className={cn(
+          'h-[18px] w-[18px] text-accent',
+          'absolute transition-all duration-300',
+          isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'
+        )}
+      />
+    </button>
   );
-} 
+}
