@@ -23,6 +23,21 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Bias Lens - News Article Bias Detection",
   description: "AI-powered tool to detect bias in news articles and provide objective analysis",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon.svg",
+  },
+  openGraph: {
+    title: "Bias Lens - Uncover Hidden Bias in Your News",
+    description: "AI-powered tool to detect bias in news articles and provide objective analysis",
+    type: "website",
+    siteName: "Bias Lens",
+  },
+  twitter: {
+    card: "summary",
+    title: "Bias Lens - News Article Bias Detection",
+    description: "AI-powered tool to detect bias in news articles and provide objective analysis",
+  },
 };
 
 export default function RootLayout({
