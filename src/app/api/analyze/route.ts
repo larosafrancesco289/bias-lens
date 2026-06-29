@@ -4,6 +4,13 @@ import { Readability } from '@mozilla/readability';
 import OpenAI from 'openai';
 import { chromium, Page } from 'playwright';
 
+const TARGET_MODEL = process.env.OPENROUTER_MODEL?.trim() || 'deepseek/deepseek-v4-flash';
+const OPENROUTER_PROVIDER = {
+  order: [process.env.OPENROUTER_PROVIDER?.trim() || 'deepseek'],
+  allow_fallbacks: false,
+  require_parameters: true,
+} as const;
+
 const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY?.trim(),
@@ -12,7 +19,6 @@ const openai = new OpenAI({
     'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'Bias Lens', // Optional. Shows in rankings on openrouter.ai.
   },
 });
-const TARGET_MODEL = process.env.OPENROUTER_MODEL || 'x-ai/grok-4.1-fast';
 
 interface BiasAnalysis {
   label: string;
@@ -237,7 +243,10 @@ Do not include any additional text before or after the JSON.`;
       ],
       temperature: 0.3, // Lower temperature for more consistent JSON
       max_tokens: 2000,
+      provider: OPENROUTER_PROVIDER,
       // response_format: { type: "json_object" } // Uncomment if the model supports it explicitly, Grok usually follows instructions well.
+    } as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
+      provider: typeof OPENROUTER_PROVIDER;
     });
 
     const text = response.choices[0]?.message?.content || null;
@@ -296,7 +305,7 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_OPENROUTER_KEY === '1') {
       const key = process.env.OPENROUTER_API_KEY?.trim() ?? '';
       const maskedKey = key ? `${key.slice(0, 6)}...${key.slice(-4)}` : 'missing';
-      console.log('[BiasLens] OpenRouter config (dev):', { model: TARGET_MODEL, apiKey: maskedKey });
+      console.log('[BiasLens] OpenRouter config (dev):', { model: TARGET_MODEL, provider: OPENROUTER_PROVIDER.order, apiKey: maskedKey });
     }
 
     if (!url) {
@@ -356,4 +365,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

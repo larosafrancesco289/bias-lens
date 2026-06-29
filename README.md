@@ -1,6 +1,6 @@
 ### Bias Lens
 
-Bias Lens analyzes news article URLs and returns a structured bias assessment using the OpenAI API.
+Bias Lens analyzes news article URLs and returns a structured bias assessment using OpenRouter.
 
 Live demo: [https://bias-lens-self.vercel.app/](https://bias-lens-self.vercel.app/)
 
@@ -17,14 +17,14 @@ Reading news across outlets can expose different framing and language. This tool
 
 ### Setup
 
-- Requirements: Node.js 18 or later, an OpenAI API key
+- Requirements: Node.js 18 or later, an OpenRouter API key
 - Clone and configure environment
 
 ```bash
 git clone https://github.com/larosafrancesco289/bias-lens.git
 cd bias-lens
 cp env.example .env.local
-# edit .env.local and set OPENAI_API_KEY
+# edit .env.local and set OPENROUTER_API_KEY
 ```
 
 ## Getting Started
@@ -103,7 +103,7 @@ Notes
 
 - Primary extraction uses JSDOM and Readability
 - Fallback uses Playwright and a set of common selectors
-- OpenAI model is configurable via `OPENAI_MODEL` and defaults to `gpt-5-mini`
+- OpenRouter model/provider are configurable via `OPENROUTER_MODEL` and `OPENROUTER_PROVIDER`; defaults are `deepseek/deepseek-v4-flash` on the `deepseek` provider.
 
 ### Scripts
 
