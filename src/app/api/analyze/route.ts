@@ -4,9 +4,13 @@ import { Readability } from '@mozilla/readability';
 import OpenAI from 'openai';
 import { chromium, Page } from 'playwright';
 
-const TARGET_MODEL = process.env.OPENROUTER_MODEL?.trim() || 'deepseek/deepseek-v4-flash';
+const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash';
+const configuredModel = process.env.OPENROUTER_MODEL?.trim();
+const TARGET_MODEL = configuredModel?.startsWith('deepseek/')
+  ? configuredModel
+  : DEFAULT_MODEL;
 const OPENROUTER_PROVIDER = {
-  order: [process.env.OPENROUTER_PROVIDER?.trim() || 'deepseek'],
+  order: ['deepseek'],
   allow_fallbacks: false,
   require_parameters: true,
 } as const;

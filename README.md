@@ -103,7 +103,7 @@ Notes
 
 - Primary extraction uses JSDOM and Readability
 - Fallback uses Playwright and a set of common selectors
-- OpenRouter model/provider are configurable via `OPENROUTER_MODEL` and `OPENROUTER_PROVIDER`; defaults are `deepseek/deepseek-v4-flash` on the `deepseek` provider.
+- OpenRouter is pinned to the `deepseek` provider. `OPENROUTER_MODEL` may override the model only with a `deepseek/*` model ID; otherwise it falls back to `deepseek/deepseek-v4-flash`.
 
 ### Scripts
 
